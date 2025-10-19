@@ -1,8 +1,10 @@
+clear 'all';
+
 params = initParams();
-b = zeros(params.NX, Params.Ny);   %scattered waves
+b = zeros(params.Nx, params.Ny, 4);   %scattered waves
 p_recording = zeros(1, params.Nt); %recording of pressure at a location for every timestep
 
-t = (0:params.NT-1) *params.dt;    % column vector of every time instance.
+t = (0:params.Nt-1) *params.dt;    % column vector of every time instance.
 
 
 %Simulation loop
