@@ -28,6 +28,7 @@ function params = initParams()
     % -- Source signal parameters ---
     params.source.type = 'sweep';                % Set 'sweep', 'dirac' or 'harmonic' to make the source generator make different types
     params.source.pos  = [1,1];                  % source node position in the mesh
+    params.source.amp = 1;                       %source amplitude
     % --- sweep source parameters ---
     params.source.f1 = 100;                      % [Hz], Start frequency of the sweep
     params.source.f2 = params.f_max;             % [Hz], Maximum frequency of the sweep

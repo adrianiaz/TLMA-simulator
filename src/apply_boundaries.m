@@ -1,16 +1,7 @@
-function [outputArg1,outputArg2] = apply_boundaries(inputArg1,inputArg2)
-%APPLY_BOUNDARIES Summary of this function goes here
-%   Detailed explanation goes here
-arguments (Input)
-    inputArg1
-    inputArg2
-end
-
-arguments (Output)
-    outputArg1
-    outputArg2
-end
-
-outputArg1 = inputArg1;
-outputArg2 = inputArg2;
+function b = apply_boundaries(b,params)
+%APPLY_BOUNDARIES 
+    b(1,:,:)       = params.boundary.R * b(1,:,:);   %left side
+    b(end,:,:)     = params.boundary.R * b(end,:,:); %right side
+    b(:,1,:)       = params.boundary.R * b(:,1,:);   %bottom
+    b(:,end,:)     = params.boundary.R * b(:,end,:); %top
 end
