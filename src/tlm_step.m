@@ -1,15 +1,9 @@
-function tlm_step = tlm_step(,inputArg2)
+function [b, pressure_recording] = tlm_step(b, params, t_step)
 %TLM_STEP Calculation that happens for every timestep k
-arguments (Input)
-    inputArg1
-    inputArg2
-end
+%must calculate incident waves, source generation, the scattering for next
+%step k+1, and change scattering of b to account for scattering. Also
+%record value at receiver. 
 
-arguments (Output)
-    outputArg1
-    outputArg2
-end
-
-outputArg1 = inputArg1;
-outputArg2 = inputArg2;
+    a = tlm_incident();
+    
 end
