@@ -1,6 +1,5 @@
-function [outputArg1,outputArg2] = tlm_step(inputArg1,inputArg2)
-%TLM_STEP Summary of this function goes here
-%   Detailed explanation goes here
+function tlm_step = tlm_step(,inputArg2)
+%TLM_STEP Calculation that happens for every timestep k
 arguments (Input)
     inputArg1
     inputArg2

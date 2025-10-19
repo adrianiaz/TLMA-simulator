@@ -1,4 +1,4 @@
-function [outputArg1,outputArg2] = inject_source(inputArg1,inputArg2)
+function [outputArg1,outputArg2] = generate_source(inputArg1,inputArg2)
 %INJECT_SOURCE Summary of this function goes here
 %   Detailed explanation goes here
 arguments (Input)
