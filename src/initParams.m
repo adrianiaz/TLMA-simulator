@@ -22,7 +22,7 @@ function params = initParams()
 
     % --- Time discretization ---
     params.dt = params.dl / params.c;            % [s] amount of time it takes to propogate a distance dl
-    params.t_max = 1;                            % [s], maximum simulation time
+    params.t_max = 0.05;                         % [s], maximum simulation time
     params.Nt = ceil(params.t_max / params.dt);  % # of time steps in simulation
     
     % -- Source signal parameters ---
@@ -34,7 +34,6 @@ function params = initParams()
     params.source.f1 = 100;                      % [Hz], Start frequency of the sweep
     params.source.f2 = params.f_max;             % [Hz], Maximum frequency of the sweep
     params.source.T = 0.1 * params.t_max;        % duration of sweep pulse (as a function of total simulation time)
-    %add direction?
     % ---harmonic source parameters
     params.source.freq = 858;                    % [Hz], Frequency for harmonic source 
     

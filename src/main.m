@@ -21,10 +21,11 @@ ylabel('Pressure [Pa]');
 title('Receiver response');
 
 % Optional: FFT to see frequency content
-Y = fft(rec);
-f = (0:length(Y)-1)/params.T;
+Y = fft(p_recording);
+f = (0:params.Nt-1)/(params.Nt * params.dt);  % frequency vector in Hz
 figure;
 plot(f, abs(Y));
 xlabel('Frequency [Hz]');
 ylabel('|Amplitude|');
 title('Frequency spectrum at receiver');
+xlim([0 params.f_max]);  % optional, limit x-axis to max frequency of interest
