@@ -4,7 +4,7 @@ function [b, pressure_recording] = tlm_step(b, params, t_step)
 %step k+1, and change scattering of b to account for scattering. Also
 %record value at receiver. 
 
-    a = tlm_incident(b); %incident on each node calculated as a result of scattering from every node in same time-step
+    a = tlm_incident(b, params); %incident on each node calculated as a result of scattering from every node in same time-step
     
     %Inject generated source acoustic signal
     % --- indices of source
