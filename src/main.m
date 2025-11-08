@@ -6,23 +6,74 @@ params = initParams();
 b = zeros(params.Nx, params.Ny, 4);   %scattered waves
 p_recording_receiver = zeros(1, params.Nt); %recording of pressure at receiver for every timestep
 p_recording_source = zeros(1, params.Nt);   %recording of pressure at source for every timestep
+if isfield(params, 'micX')
+    p_field = zeros(numel(params.micX), params.Nt);
+end
+
 t = (0:params.Nt-1) *params.dt;    % column vector of every time instance.
+
+
+% === Snapshot initialization for harmonic source ===
+if strcmp(params.source.type, 'harmonic')
+
+    % Basic properties
+    T_period = 1 / params.source.freq;
+    roundtrip_time = 2 * params.Lx / params.c;
+
+    % Choose a time well after transient build-up 
+    t_ss = max(20 * roundtrip_time, 20 * T_period);
+    t_ss = min(t_ss, params.t_max - T_period);   % keep inside simulation window
+
+    % Four snapshots over one oscillation cycle
+    snapshot_times = t_ss + (0:3) * (T_period / 4);
+
+    % Clamp within simulation
+    snapshot_times = snapshot_times(snapshot_times <= params.t_max - params.dt);
+
+    % Convert to time-step indices
+    snapshot_idx = round(snapshot_times / params.dt) + 1;
+
+else
+    snapshot_idx = [];
+    snapshot_times = [];
+end
+
+% Preallocate snapshot fields if needed
+numSnapshots = numel(snapshot_idx);
+if isfield(params, 'numMics')
+    snapshot_fields = zeros(params.numMics, numSnapshots);
+else
+    snapshot_fields = [];
+end
+
 
 
 %Simulation loop
 for k = 1:params.Nt
-    [b, p_recording_receiver(k), p_recording_source(k)] = tlm_step(b,params,t(k)); %records pressure over time, and updates b for every step k
+    [b, p_recording_receiver(k), p_recording_source(k), p_mics] = tlm_step(b, params, t(k));
 
-    if mod(k, round(params.Nt/10)) == 0                     % -- -- progress status
+    if ~isempty(p_mics)
+        p_field(:, k) = p_mics(:);
+    end
+
+    % Save microphone field at specific snapshots
+    if any(k == snapshot_idx)
+        s_index = find(snapshot_idx == k);
+        snapshot_fields(:, s_index) = p_mics(:);
+    end
+
+
+    if mod(k, round(params.Nt / 10)) == 0
         fprintf('Progress: %.0f%%\n', 100*k/params.Nt);
     end
+
 end
 
 %FFT for frequency content of recorded signal (frequency response)
 win = hann(length(p_recording_receiver))';
 p_windowed = p_recording_receiver .* win;
 
-Y = fft(p_recording_receiver);
+Y = fft(p_windowed);
 Y_pos = Y(1:floor(params.Nt/2));
 
 %SPL 
@@ -116,7 +167,66 @@ for k = 1:numel(h)
     fprintf('Saved: %s\n', savePathPNG);
 end
 
+%% === Snapshot Saving for Harmonic Source ===
+
+if strcmp(params.source.type, 'harmonic')
+
+    % --- Re-run through p_field to extract snapshots ---
+    for n = 1:numSnapshots
+        snapshot_fields(:, n) = p_field(:, snapshot_idx(n));
+    end
+
+    % --- Make save directory ---
+    R_str = sprintf('R%.2f', R_value);
+    R_str = strrep(R_str, '.', '_');
+    snapshotDir = fullfile(subDir, 'snapshots');
+    if ~exist(snapshotDir, 'dir')
+        mkdir(snapshotDir);
+    end
+
+    % --- Plot and save all snapshots ---
+    phase_deg = mod((0:numSnapshots-1) * 90, 360);  % 0°, 90°, 180°, 270° cycle
+
+    for n = 1:numSnapshots
+        fig = figure('Visible', 'off');
+        plot(params.micX * params.dl, snapshot_fields(:, n), 'LineWidth', 1.5);
+        xlabel('x [m]');
+        ylabel('Pressure [Pa]');
+        title(sprintf('Snapshot: t = %.4f s  (%.0f° phase)', snapshot_times(n), phase_deg(n)));
+        grid on;
+    
+        % Save descriptive filename
+        fname = sprintf('snapshot_t%.5fs_phase%.0fdeg.png', snapshot_times(n), phase_deg(n));
+        exportgraphics(fig, fullfile(snapshotDir, fname), 'Resolution', 300);
+        close(fig);
+    end
+
+    % --- Combined plot (all snapshots on one figure) ---
+    fig = figure;
+    for n = 1:numSnapshots
+        plot(params.micX * params.dl, snapshot_fields(:, n), 'DisplayName', ...
+             sprintf('t = %.4f s', snapshot_times(n)), 'LineWidth', 1.2);
+        hold on;
+    end
+    xlabel('x [m]');
+    ylabel('Pressure [Pa]');
+    title('Harmonic Source: Pressure Field Over One Oscillation Cycle');
+    legend(arrayfun(@(p,t) sprintf('%.0f°  (t=%.4fs)', p, t), phase_deg, snapshot_times, 'UniformOutput', false));
+
+    grid on;
+
+    % Save combined figure
+    exportgraphics(fig, fullfile(snapshotDir, 'snapshots_combined.png'), 'Resolution', 300);
+
+    % --- Save data too ---
+    save(fullfile(snapshotDir, 'snapshot_data.mat'), ...
+        'snapshot_fields', 'snapshot_times', 'snapshot_idx', ...
+        'params', 'p_field');
+end
+
+
 % --- Save simulation data ---
 dataFile = fullfile(subDir, sprintf('%s_%s_data.mat', srcType, R_str));
 save(dataFile, 'params', 't', 'p_recording_receiver', 'p_recording_source', 'f', 'Y_pos', 'SPL');
 fprintf('Saved simulation data to: %s\n', dataFile);
+

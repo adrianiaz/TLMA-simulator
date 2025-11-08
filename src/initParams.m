@@ -1,8 +1,8 @@
 function params = initParams()
     
-    % --- Physical constants ---
+    % --- Physical constants ---    
     params.c = 343;                             % [m/s], speed of sound
-    params.c = params.c* sqrt(2);
+    params.c_eff = params.c* sqrt(2);           % [m/s], speed of sound adjustment for TLM simulator       
     params.temp = 20;                           % [Celsius], simulation temperature 
     params.rho0 = 1.204;                        % [kg/m3], density of air
     
@@ -13,7 +13,7 @@ function params = initParams()
 
     % --- Frequency and resolution ---
     params.f_max = 2000;                         % [Hz], maximum frequency
-    params.lambda_min = params.c/params.f_max;   % [m] shortest wavelength
+    params.lambda_min = params.c_eff/params.f_max;   % [m] shortest wavelength
     params.nppw = 40;                            % number of points per wavelength, should be >=10
     params.dl = params.lambda_min / params.nppw; % [m], step length between mesh points
 
@@ -22,12 +22,12 @@ function params = initParams()
     params.Ny = ceil(params.Ly / params.dl);     % #of nodes in y-direction
 
     % --- Time discretization ---
-    params.dt = params.dl / params.c;            % [s] amount of time it takes to propogate a distance dl
-    params.t_max = 1;                            % [s], maximum simulation time
+    params.dt = params.dl / params.c_eff;            % [s] amount of time it takes to propogate a distance dl
+    params.t_max = 0.2;                          % [s],  simulation time
     params.Nt = ceil(params.t_max / params.dt);  % # of time steps in simulation
     
     % -- Source signal parameters ---
-    params.source.type = 'sweep';                % Set 'sweep', 'dirac' or 'harmonic' to make the source generator make different types
+    params.source.type = 'harmonic';                % Set 'sweep', 'dirac' or 'harmonic' to make the source generator make different types
     params.source.pos  = [1,1];                  % source node position in the mesh
     params.source.dir = 1;                       % Source channel direction, here 3: west has been chosen.
     params.source.amp = 1;                       % Source amplitude
@@ -38,11 +38,16 @@ function params = initParams()
     params.source.n = round(params.source.T*(params.source.f1 + params.source.f2)); %finds an integer value that most closely resembles T
     params.source.T = params.source.n/(params.source.f1 + params.source.f2); %reset T to make sure it stops at a zero crossing
     % ---harmonic source parameters
-    params.source.freq = 858;                    % [Hz], Frequency for harmonic source 
+    params.source.freq = 85.75;                    % [Hz], Frequency for harmonic source 
     
      % --- Receiver configuration ---
-    params.recPos = [params.Nx, 1];        % node position (lower right)
-      
+    params.recPos = [params.Nx, 1];        % node position for single mic (lower right)
+
+    params.numMics = 40;                   % number of microphones along pipe
+  
+    params.micX = round(linspace(1, params.Nx, params.numMics));  % equally spaced along x-axis
+    params.micY = round(params.Ny / 2) * ones(size(params.micX));    % all at mid-height
+
     %boundary conditions
     params.R = 1;                               % Reflection coefficient at boundaries
     
