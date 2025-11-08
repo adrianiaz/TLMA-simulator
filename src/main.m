@@ -37,7 +37,7 @@ f = (0:params.Nt/2-1)/(params.Nt * params.dt);
 % --- Store figure handles in correct order ---
 h = gobjects(4,1);  % Preallocate for figure handles
 
-% 1️⃣ Receiver time response
+% Receiver time response
 h(1) = figure;
 plot(t, p_recording_receiver);
 xlabel('Time [s]');
@@ -45,7 +45,7 @@ ylabel('Pressure [Pa]');
 title('Receiver response');
 grid on;
 
-% 2️⃣ Source signal
+% Source signal
 h(2) = figure;
 plot(t, p_recording_source);
 xlabel('Time [s]');
@@ -53,7 +53,7 @@ ylabel('Pressure [Pa]');
 title('Source signal');
 grid on;
 
-% 3️⃣ Amplitude spectrum
+% Amplitude spectrum
 h(3) = figure;
 plot(f, abs(Y_pos));
 xlabel('Frequency [Hz]');
@@ -62,7 +62,7 @@ title('Frequency spectrum at receiver');
 xlim([0 params.f_max]);
 grid on;
 
-% 4️⃣ SPL spectrum
+% SPL spectrum
 h(4) = figure;
 plot(f, SPL);
 xlabel('Frequency [Hz]');
@@ -81,8 +81,16 @@ end
 
 % Create subfolder for this source type, e.g. ./figures/sweep/
 srcType = params.source.type;
-subDir = fullfile('figures', srcType);
+srcDir = fullfile('figures', srcType);
+if ~exist(srcDir, 'dir')
+    mkdir(srcDir);
+end
 
+% Create additional subfolder for R value, formatted safely (no dots)
+R_value = params.R;
+R_str = sprintf('R%.2f', R_value);   % e.g. "R1.00"
+R_str = strrep(R_str, '.', '_');     % -> "R1_00"
+subDir = fullfile(srcDir, R_str);
 if ~exist(subDir, 'dir')
     mkdir(subDir);
 end
@@ -94,21 +102,21 @@ figNames = {'receiver_time', 'source_time', 'amplitude_spectrum', 'SPL_spectrum'
 for k = 1:numel(h)
     fig = h(k);
 
-    % Construct base name: e.g. sweep_receiver_time
-    baseName = sprintf('%s_%s', srcType, figNames{k});
+    % Construct base name: e.g. sweep_R1_00_receiver_time
+    baseName = sprintf('%s_%s_%s', srcType, R_str, figNames{k});
 
     % Full file paths
     savePathPNG = fullfile(subDir, [baseName, '.png']);
     savePathFIG = fullfile(subDir, [baseName, '.fig']);
 
     % Save files
-    exportgraphics(fig, savePathPNG, 'Resolution', 300);
+    exportgraphics(get(fig, 'CurrentAxes'), savePathPNG, 'Resolution', 300);
     savefig(fig, savePathFIG);
 
-    fprintf('✅ Saved: %s\n', savePathPNG);
+    fprintf('Saved: %s\n', savePathPNG);
 end
 
 % --- Save simulation data ---
-dataFile = fullfile(subDir, sprintf('%s_data.mat', srcType));
+dataFile = fullfile(subDir, sprintf('%s_%s_data.mat', srcType, R_str));
 save(dataFile, 'params', 't', 'p_recording_receiver', 'p_recording_source', 'f', 'Y_pos', 'SPL');
-fprintf('💾 Saved simulation data to: %s\n', dataFile);
+fprintf('Saved simulation data to: %s\n', dataFile);
