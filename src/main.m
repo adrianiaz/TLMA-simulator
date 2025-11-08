@@ -210,7 +210,7 @@ if strcmp(params.source.type, 'harmonic')
     end
     xlabel('x [m]');
     ylabel('Pressure [Pa]');
-    title('Harmonic Source: Pressure Field Over One Oscillation Cycle');
+    title('Harmonic Source: Pressure field over one oscillation cycle');
     legend(arrayfun(@(p,t) sprintf('%.0f°  (t=%.4fs)', p, t), phase_deg, snapshot_times, 'UniformOutput', false));
 
     grid on;
