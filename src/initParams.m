@@ -23,11 +23,11 @@ function params = initParams()
 
     % --- Time discretization ---
     params.dt = params.dl / params.c;            % [s] amount of time it takes to propogate a distance dl
-    params.t_max = 0.1;                            % [s], maximum simulation time
+    params.t_max = 1;                            % [s], maximum simulation time
     params.Nt = ceil(params.t_max / params.dt);  % # of time steps in simulation
     
     % -- Source signal parameters ---
-    params.source.type = 'dirac';                % Set 'sweep', 'dirac' or 'harmonic' to make the source generator make different types
+    params.source.type = 'sweep';                % Set 'sweep', 'dirac' or 'harmonic' to make the source generator make different types
     params.source.pos  = [1,1];                  % source node position in the mesh
     params.source.dir = 1;                       % Source channel direction, here 3: west has been chosen.
     params.source.amp = 1;                       % Source amplitude

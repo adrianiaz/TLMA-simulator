@@ -19,43 +19,96 @@ for k = 1:params.Nt
 end
 
 %FFT for frequency content of recorded signal (frequency response)
-%win = hann(length(p_recording_receiver))';
-%p_windowed = p_recording_receiver .* win;
+win = hann(length(p_recording_receiver))';
+p_windowed = p_recording_receiver .* win;
 
 Y = fft(p_recording_receiver);
 Y_pos = Y(1:floor(params.Nt/2));
-f = (0:params.Nt/2-1)/(params.Nt * params.dt);
-
-% Plot results
-figure;
-plot(t, p_recording_receiver);
-xlabel('Time [s]');
-ylabel('Pressure [Pa]');
-title('Receiver response');
-
-% Plot results
-figure;
-plot(t, p_recording_source);
-xlabel('Time [s]');
-ylabel('Pressure [Pa]');
-title('source signal');
-
-
-figure;
-plot(f, abs(Y_pos));
-xlabel('Frequency [Hz]');
-ylabel('|Amplitude|');
-title('Frequency spectrum at receiver');
-xlim([0 params.f_max]);  % optional, limit x-axis to max frequency of interest
 
 %SPL 
 p_ref = 20e-6;   % 20 µPa reference
 SPL = 20 * log10( abs(Y_pos) / p_ref );
 
-figure;
+
+f = (0:params.Nt/2-1)/(params.Nt * params.dt);
+
+%% === Plot results ===
+
+% --- Store figure handles in correct order ---
+h = gobjects(4,1);  % Preallocate for figure handles
+
+% 1️⃣ Receiver time response
+h(1) = figure;
+plot(t, p_recording_receiver);
+xlabel('Time [s]');
+ylabel('Pressure [Pa]');
+title('Receiver response');
+grid on;
+
+% 2️⃣ Source signal
+h(2) = figure;
+plot(t, p_recording_source);
+xlabel('Time [s]');
+ylabel('Pressure [Pa]');
+title('Source signal');
+grid on;
+
+% 3️⃣ Amplitude spectrum
+h(3) = figure;
+plot(f, abs(Y_pos));
+xlabel('Frequency [Hz]');
+ylabel('|Amplitude|');
+title('Frequency spectrum at receiver');
+xlim([0 params.f_max]);
+grid on;
+
+% 4️⃣ SPL spectrum
+h(4) = figure;
 plot(f, SPL);
 xlabel('Frequency [Hz]');
 ylabel('SPL [dB re 20 µPa]');
 title('Frequency spectrum at receiver (SPL)');
-xlim([0 params.f_max]);   % optional
+xlim([0 params.f_max]);
 grid on;
+
+
+%% === Automatically save all figures and data ===
+
+% Ensure main figures directory exists
+if ~exist('figures', 'dir')
+    mkdir('figures');
+end
+
+% Create subfolder for this source type, e.g. ./figures/sweep/
+srcType = params.source.type;
+subDir = fullfile('figures', srcType);
+
+if ~exist(subDir, 'dir')
+    mkdir(subDir);
+end
+
+% Descriptive filenames for each figure
+figNames = {'receiver_time', 'source_time', 'amplitude_spectrum', 'SPL_spectrum'};
+
+% --- Save figures ---
+for k = 1:numel(h)
+    fig = h(k);
+
+    % Construct base name: e.g. sweep_receiver_time
+    baseName = sprintf('%s_%s', srcType, figNames{k});
+
+    % Full file paths
+    savePathPNG = fullfile(subDir, [baseName, '.png']);
+    savePathFIG = fullfile(subDir, [baseName, '.fig']);
+
+    % Save files
+    exportgraphics(fig, savePathPNG, 'Resolution', 300);
+    savefig(fig, savePathFIG);
+
+    fprintf('✅ Saved: %s\n', savePathPNG);
+end
+
+% --- Save simulation data ---
+dataFile = fullfile(subDir, sprintf('%s_data.mat', srcType));
+save(dataFile, 'params', 't', 'p_recording_receiver', 'p_recording_source', 'f', 'Y_pos', 'SPL');
+fprintf('💾 Saved simulation data to: %s\n', dataFile);
